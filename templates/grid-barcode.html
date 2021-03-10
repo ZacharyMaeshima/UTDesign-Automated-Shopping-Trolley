@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <title>Grocery Scanning</title>
+        <style>
+
+        .page {
+            background: linear-gradient(to bottom right, #3392db 0%, #9cbe97 83%);
+        }
+        .grid-container {
+            display: grid;
+            grid-template-columns: 1fr 1fr 1fr 1fr;
+            grid-auto-rows: minmax(9em, auto);
+            gap: 0px 0px;
+            grid-template-areas:
+                "header header header header"
+                "cart cart cart addremove"
+                "cart cart cart ."
+                "cart cart cart ."
+                "cart cart cart ."
+                ". . total checkout";
+            /* background: linear-gradient(to bottom right, #3392db 0%, #9cbe97 83%); */
+            margin-left: 0.5%;
+            /* width: 100vw; */
+            /* height: 100vh; */
+        }
+
+        .header {
+            grid-area: header; 
+            /* background: green; */
+        }
+
+        .cart {
+            grid-area: cart;
+            border: #333 0.15em solid;
+            background: white;
+        }
+
+        .addremove { 
+            grid-area: addremove; 
+            /* background: red; */
+            justify-self: center;
+            align-self: center;
+        }
+
+        .addremovebuttons {
+            justify-self: center;
+            align-self: center;
+        }
+
+        .total { 
+            grid-area: total; 
+            /* background: yellow; */
+            text-align: right;
+            font-size: 27px;
+        }
+
+        .checkout {
+            grid-area: checkout;
+            /* background: purple; */
+        }
+        .dataBarcode {
+            width: 100%;
+            border: 1px solid black;
+            text-align: center;
+        }
+        table {
+            text-align: center;
+        }
+
+        </style>
+	    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+    </head>
+
+    <body>
+        <div class = "page">
+            <div class="grid-container">
+            <div class="header"></div>
+            <div class="cart">
+                <table class="table table-striped">
+                    <thead class="thead-dark">
+                      <tr>
+                        <th scope="col">Item</th>
+                        <th scope="col">Price ea.</th>
+                        <th scope="col">Quantity</th>
+                        <th scope="col">Total Cost</th>
+                      </tr>
+                    </thead>
+                    <tbody class = "dataBarcode">
+                      <tr>
+                        <th scope="row">Pizza</th>
+                        <td>$5.99</td>
+                        <td>1</td>
+                        <td>$5.99</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Chips</th>
+                        <td>$2.99</td>
+                        <td>1</td>
+                        <td>$2.99</td>
+                      </tr>
+                      <tr>
+                        <th scope="row">Water</th>
+                        <td>$4.99</td>
+                        <td>2</td>
+                        <td>$9.98</td>
+                      </tr>
+                    </tbody>
+                  </table>
+            </div>
+            <div class="addremove">
+                <div class="text-center" data-toggle="buttons">
+                    <label class="btn btn-lg btn-success ">
+                        <input type="radio" name="options" id="option5" value = "add" checked>
+                        Add
+                    </label>
+                    <label class="btn btn-lg btn-danger">
+                        <input type="radio" name="options" id="option6" value = "remove">
+                        Remove
+                    </label>
+                </div>
+            </div>
+            <div class="total text-center">
+                <b>Total:</b>
+                $18.96
+            </div>
+            <div class="checkout text-center">
+                <button type="button" class="btn btn-primary btn-lg">Checkout</button>
+            </div>
+          </div>
+        </div>
+
+          <script>
+            var dataList = [];
+
+            function addOrRemove() {
+                const radioButtons = document.querySelectorAll('input[name="options"]');
+                let selectedValue;
+
+                for (const radioButton of radioButtons) {
+                    if (radioButton.checked) {
+                        selectedValue = radioButton.value;
+                        break;
+                    }
+                }
+                return selectedValue;
+            }
+            
+            function findItem() {
+                var itemName = "Test Name";
+                var item = $('tr').filter(function(){
+                    return $(this).data('name') === itemName;
+                });
+
+                if(item.length == 0)
+                    return 0;
+                else
+                    return item; 
+            }
+
+            function editQuantityTotal(item, adjustQuantity) {
+                var itemName = "Test Name";
+                var indvPrice = item.find('.indvPrice').text().replace('$', '');
+
+                item.find('.quantity').text(function(i, num) {
+                    return Number(num) + adjustQuantity;
+                });
+
+                item.find('.totPrice').text(function(i, totalPrice) {
+                    totalPrice = totalPrice.replace('$', '');
+                    totalPrice = (parseFloat(totalPrice) + (adjustQuantity * parseFloat(indvPrice))).toFixed(2);
+                    totalPrice = "$" + totalPrice;
+                    return totalPrice;
+                });
+            }
+
+            function formHTMLItem() {
+                var itemName = "Test Name";
+                var itemPrice = 5.99;
+                var itemQuantity = 1;
+                var itemTotal = itemPrice * itemQuantity;
+
+                var htmlName = "<th scope = \"row\">" + itemName + "</th>";
+                var htmlPrice = "<td class = \"indvPrice\">$" + itemPrice + "</td>";
+                var htmlQuantity = "<td class = \"quantity\">" + itemQuantity + "</td>";
+                var htmlTotal = "<td class = \"totPrice\">$" + itemTotal + "</td>";
+                
+                var htmlItem = document.createElement("tr");
+                htmlItem.setAttribute("data-name", itemName);
+                htmlItem.innerHTML = htmlName + htmlPrice + htmlQuantity + htmlTotal;
+
+                return htmlItem;
+            }
+
+            function insertItem() {
+                return formHTMLItem();
+            }
+
+            function removeItem(item) {
+                // var itemName = "Test Name";
+
+                // $('tr').filter(function(){
+                //     return $(this).data('name') === itemName;
+                // }).remove();
+
+                item.remove();
+            }
+
+
+
+            function requestData() {
+                let action;
+                var data = $.get('/getbarcode');
+                    data.done(function (result)
+                    {
+                        action = addOrRemove();
+                        item = findItem();
+
+                        if(action === "add") {
+                            if(item === 0) {
+                                console.log("Add non-existing item.");
+                                $(".dataBarcode").append(insertItem());
+                            }
+                            else {
+                                console.log("Increase quantity of existing item.");
+                                editQuantityTotal(item,1);
+                            }
+                        }
+                        
+                        else if(action === "remove") {
+
+                            if(item === 0) 
+                                console.log("There is no item to remove.");
+                            else {
+                                quantity = Number(item.find('.quantity').text());
+                                if(quantity === 1) {
+                                    console.log("Remove item completely");
+                                    removeItem(item);
+                                }
+                                else {
+                                    console.log("Decrease quantity of existing item.");
+                                    editQuantityTotal(item,-1);
+                                }
+                            }
+                        }
+                        else   
+                            console.log("Error. Action is neither add or remove");
+                        setTimeout(requestData, 500);
+                    });
+            }
+
+            $(document).ready(function()
+            {
+                try {
+                    requestData();
+                } catch(err) {
+                    console.log("Error", err);
+                }
+            });
+        </script>
+    </body>
+</html>
