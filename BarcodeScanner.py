@@ -1,9 +1,14 @@
 #!/usr/bin/python
 import sys
-import requests
-import json
+import boto3
 
-api_key = "4CB6DEC567087909E1D57FBB985995D8" #https://upcdatabase.org/
+tableName = "AutomatedShoppingTrolleyDB"
+primaryColumn = "UPC"
+REGION = "us-east-1"
+# ACCESS_KEY, SECRET_KEY, AND TOKEN have to be replaced every 3 hours (limitation of AWS student account)
+ACCESS_KEY = "blah"
+SECRET_KEY = "blah"
+TOKEN = "blah"
 
 def barcode_reader():
     """Barcode code obtained from 'brechmos' 
@@ -65,27 +70,41 @@ def barcode_reader():
                         ss += hid[int(c)]
     return ss
 
-def UPC_lookup(api_key,upc):
-    '''V3 API'''
-
-    url = "https://api.upcdatabase.org/product/%s"% (upc + "?"+ "apikey=" + api_key)
-
-    headers = {
-        'cache-control': "no-cache",
-    }
-
-    response = requests.request("GET", url, headers=headers)
-
-    print("-----" * 5)
-    print(upc)
-    print(json.dumps(response.json(), indent=2))
-    print("-----" * 5 + "\n")
-    # return upc
-    return json.dumps(response.json(), indent=2)
+def UPC_lookup(upc):
+    db = boto3.resource('dynamodb',
+                        aws_access_key_id = ACCESS_KEY,
+                        aws_secret_access_key = SECRET_KEY,
+                        aws_session_token = TOKEN,
+                        region_name = REGION)
+    table = db.Table(tableName)
+    try :
+        response = table.get_item(
+            Key = {
+                primaryColumn: upc
+                })
+        
+        response = response['Item']
+        formattedResponse = {
+            "ItemName": response['ItemName'],
+            "ItemPrice": float(response['ItemPrice']),
+            "ItemTaxable": response['ItemTaxable'],
+            "ItemWeight": float(response['ItemWeight'])}
+    
+        print("-----" * 5)
+        print(upc)
+        print(formattedResponse)
+        print("-----" * 5 + "\n")
+        # return upc
+        return formattedResponse
+    
+    except:
+            print("Failed to get item from the DynamoDB Table")
+            return "error"
 
 if __name__ == '__main__':
     try:
         while True:
-            UPC_lookup(api_key,barcode_reader())
+            UPC_lookup(barcode_reader())
     except KeyboardInterrupt:
         pass
+
