@@ -114,7 +114,7 @@
         </div>
 
           <script>
-            var dataList = [];
+            var itemsList = new Array();
             var taxRate = 1.0825;
 
             function addOrRemove() {
@@ -133,11 +133,12 @@
 
 
             function findItem(itemName) {
+                //Find the item's HTML row element
                 var item = $('tr').filter(function(){
                     return $(this).data('name') === itemName;
                 });
-
-                if(item.length == 0)
+                //There is no item
+                if(item.length === 0)
                     return 0;
                 else
                     return item; 
@@ -146,13 +147,12 @@
 
 
             function editQuantityTotal(item, adjustQuantity, itemTotal) {
-                var itemName = "Test Name";
-                var indvPrice = item.find('.indvPrice').text().replace('$', '');
-
+                //Change the quantity of the item
                 item.find('.quantity').text(function(i, itemQuantity) {
                     return Number(itemQuantity) + adjustQuantity;
                 });
 
+                //Change the total price of the item
                 item.find('.totPrice').text(function(i, itemTotalPrice) {
                     itemTotalPrice = itemTotalPrice.replace('$', '');
                     itemTotalPrice = (parseFloat(itemTotalPrice) + (adjustQuantity * parseFloat(itemTotal))).toFixed(2);
@@ -163,12 +163,29 @@
 
 
 
-            function insertItem(item, itemTotal) {
+            function insertSessionItem(sessionItem) {
+                //Create html of the item's columns
+                var htmlName = "<th scope = \"row\">" + sessionItem.name + "</th>";
+                var htmlPrice = "<td class = \"indvPrice\">$" + sessionItem.price + "</td>";
+                var htmlQuantity = "<td class = \"quantity\">" + sessionItem.quantity + "</td>";
+                var htmlTotal = "<td class = \"totPrice\">$" + sessionItem.total + "</td>";
+                
+                //Create the item html row
+                var htmlItem = document.createElement("tr");
+                htmlItem.setAttribute("data-name", sessionItem.name);
+                htmlItem.innerHTML = htmlName + htmlPrice + htmlQuantity + htmlTotal;
+
+                return htmlItem;
+            }
+
+            function insertNewItem(item, itemTotal) {
+                //Create html of the item's columns
                 var htmlName = "<th scope = \"row\">" + item.ItemName + "</th>";
                 var htmlPrice = "<td class = \"indvPrice\">$" + item.ItemPrice + "</td>";
                 var htmlQuantity = "<td class = \"quantity\">1</td>";
                 var htmlTotal = "<td class = \"totPrice\">$" + itemTotal + "</td>";
                 
+                //Create the item html row
                 var htmlItem = document.createElement("tr");
                 htmlItem.setAttribute("data-name", item.ItemName);
                 htmlItem.innerHTML = htmlName + htmlPrice + htmlQuantity + htmlTotal;
@@ -185,79 +202,180 @@
 
             
             function adjustTotal(price) {
-                var totalElement = $(".totalCost");
-                totalElement.text(function(i, totalCost) {
+                $(".totalCost").text(function(i, totalCost) {
                     totalCost = totalCost.replace('$', '');
                     totalCost = parseFloat(totalCost) + parseFloat(price);
                     totalCost = parseFloat(totalCost).toFixed(2);
                     totalCost = "$" + totalCost;
-                    console.log("Price: " + price);
                     return totalCost;
                 });
             }
 
 
 
+            function removeSessionItem(itemName) {
+                let index;
+                //Loop through items in itemList
+                for(index = 0; index < itemsList.length; index++) {
+                    //The item is the item we're looking for
+                    if(itemsList[index].name === itemName) {
+                        itemsList.splice(index, 1);     //Remove it from the array
+                        break;
+                    }
+                }
+            }
+
+
+
+            function adjustSessionItemQuantityAndTotal(index, name, quantity, total) {
+                itemsList[index].quantity = itemsList[index].quantity + quantity;
+                itemsList[index].total = itemsList[index].total + total;
+            }
+
+
+
+            function findSessionItemInItemsList(itemName) {
+                let index;
+                if(Array.isArray(itemsList) && itemsList.length >= 0) {
+                    //Loop through items in itemList
+                    for(index = 0; index < itemsList.length; index++) {
+                        //Item is the item we're looking for
+                        if(itemsList[index].name === itemName) 
+                            return index;
+                    }
+                }
+                return -1;  //No item was found
+            }
+
+
+
+            function manageSessionItem(sessionItem) {
+                //Session item is being removed from itemsList
+                if(sessionItem.quantity === 0) 
+                    removeSessionItem(sessionItem.name);
+                else {
+                    let sessionItemIndex = findSessionItemInItemsList(sessionItem.name);       //Check to see if sessionItem is in itemsList
+                    //sessionItem is in itemsList
+                    if(sessionItemIndex > -1) {
+                        adjustSessionItemQuantityAndTotal(sessionItemIndex, sessionItem.name, sessionItem.quantity, sessionItem.total);
+                    }
+                    //There is an existing list, but the item isn't in the list
+                    else if(Array.isArray(itemsList) && itemsList.length >= 0) 
+                        itemsList.push(sessionItem);
+                    //There isn't a list
+                    else
+                        itemsList = new Array(sessionItem);
+                }
+                console.log("Updated itemsList");
+                console.log(itemsList)
+            }
+
+
+
+            function insertPreviousSessionData() {
+                let index;
+                //Loop through items in itemList
+                for(index = 0; index < itemsList.length; index++) {
+                    $(".dataBarcode").append(insertSessionItem(itemsList[index]));
+                    adjustTotal(itemsList[index].total);
+                }
+            }
+
+
+
+            function getPreviousSessionData() {
+                itemsList = JSON.parse(sessionStorage.getItem('cart'));
+                console.log("Previous session");
+                console.log(itemsList);
+                //There is previous session data
+                if(Array.isArray(itemsList) && itemsList.length > 0)
+                    insertPreviousSessionData();
+            }
+
             function requestData() {
                 let action;
+                let sessionItem = {name: "", price: 0, quantity: 0, total: 0};
 
-                var data = $.get('/getbarcode');
-                    data.done(function (result)
-                    {
-                        if(result === "error")
-                            console.log("Failed to GET from Database");
-                        else {
-                            var itemTotal;
-                            if(result.ItemTaxable) {
-                                result.ItemName = result.ItemName + "*";
-                                itemTotal = parseFloat(result.ItemPrice * taxRate).toFixed(2);
-                            }
-                            else
-                                itemTotal = result.ItemPrice;
+                var data = $.get('/getbarcode');        //Call python code for barcode scanner
+                //When python code returns something
+                data.done(function (result)
+                {
+                    if(result === "error")
+                        console.log("Failed to GET from Database");
+                    else {
+                        var itemTotal;
 
-                            let tableItem = findItem(result.ItemName);
-                            action = addOrRemove();
-
-                            if(action === "add") {
-                                if(tableItem === 0) {
-                                    console.log("Add non-existing item.");
-                                    $(".dataBarcode").append(insertItem(result, itemTotal));
-                                }
-                                else {
-                                    console.log("Increase quantity of existing item.");
-                                    editQuantityTotal(tableItem, 1, itemTotal);
-                                }
-                                adjustTotal(itemTotal);
-                            }
-                            
-                            else if(action === "remove") {
-
-                                if(tableItem === 0) 
-                                    console.log("There is no item to remove.");
-                                else {
-                                    quantity = Number(tableItem.find('.quantity').text());
-                                    if(quantity === 1) {
-                                        console.log("Remove item completely");
-                                        removeItem(tableItem);
-                                        adjustTotal(itemTotal * -1);
-                                    }
-                                    else {
-                                        console.log("Decrease quantity of existing item.");
-                                        editQuantityTotal(tableItem, -1, itemTotal);
-                                        adjustTotal(itemTotal * -1);
-                                    }
-                                }
-                            }
-                            else   
-                                console.log("Error. Action is neither add or remove");
+                        if(result.ItemTaxable) {
+                            result.ItemName = result.ItemName + "*";                                //Set name to have * to represent it is taxable
+                            itemTotal = Number(parseFloat(result.ItemPrice * taxRate).toFixed(2));  //Calculate the cost of the item with tax
                         }
-                        setTimeout(requestData, 250);
-                    });
+                        else
+                            itemTotal = result.ItemPrice;
+
+                        let tableItem = findItem(result.ItemName);      //0 if the item isn't already in the table, else it is the HTML element of the item
+                        action = addOrRemove();                         //Determine whether the radio buttons are on add or remove
+
+                        if(action === "add") {
+                            //Add new item
+                            if(tableItem === 0) {
+                                console.log("Add non-existing item.");
+                                $(".dataBarcode").append(insertNewItem(result, itemTotal));         //Add item to table
+                                sessionItem.name = result.ItemName 
+                                sessionItem.price = result.ItemPrice;
+                                sessionItem.quantity = 1;
+                                sessionItem.total = itemTotal;
+                            }
+                            //Item is in the table so just increase quantity
+                            else {
+                                console.log("Increase quantity of existing item.");
+                                editQuantityTotal(tableItem, 1, itemTotal);
+                                sessionItem.name = result.ItemName 
+                                sessionItem.quantity = 1;
+                                sessionItem.total = itemTotal;
+                            }
+                            adjustTotal(itemTotal); //Adjust the total at the bottom of the cart
+                        }
+                        
+                        else if(action === "remove") {
+                            //Item isn't in the table
+                            if(tableItem === 0) 
+                                console.log("There is no item to remove.");
+                            else {
+                                quantity = Number(tableItem.find('.quantity').text());      //Get the quantity of the item
+
+                                //Item quantity is 1 so remove item from cart
+                                if(quantity === 1) {
+                                    console.log("Remove item completely");
+                                    removeItem(tableItem);
+                                    sessionItem.name = result.ItemName;
+                                    sessionItem.quantity = 0;               //0 means we're removing the item
+                                }
+                                //Item quantity is more than 1, decrement quantity
+                                else {
+                                    console.log("Decrease quantity of existing item.");
+                                    editQuantityTotal(tableItem, -1, itemTotal);
+                                    sessionItem.name = result.ItemName 
+                                    sessionItem.quantity = -1;
+                                    sessionItem.total = -1 * itemTotal;
+                                }
+                                adjustTotal(itemTotal * -1);    //Adjust the total at the bottom of the cart
+                            }
+                        }
+                        else   
+                            console.log("Error. Action is neither add or remove");
+                        //Session item has something in it
+                        if(sessionItem.name !== "")
+                            manageSessionItem(sessionItem);
+                        sessionStorage.setItem('cart', JSON.stringify(itemsList));
+                    }
+                    setTimeout(requestData, 250);
+                });
             }
 
             $(document).ready(function()
             {
                 try {
+                    getPreviousSessionData();
                     requestData();
                 } catch(err) {
                     console.log("Error", err);
