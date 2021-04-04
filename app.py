@@ -3,8 +3,14 @@ import BarcodeScanner
 
 app = Flask(__name__)
 
+
 @app.route("/", methods = ["POST", "GET"])
-def home():
+def home:
+    return render_template("index.html")
+
+
+@app.route("/scan", methods = ["POST", "GET"])
+def scan():
     return render_template("grid-barcode.html")
 
 @app.route("/getbarcode", methods = ["GET"])

@@ -4,8 +4,13 @@
         <title>Grocery Scanning</title>
         <style>
 
-        .page {
-            background: linear-gradient(to bottom right, #3392db 0%, #9cbe97 83%);
+        html, .page {
+            /* background: linear-gradient(to bottom right, #3392db 0%, #9cbe97 83%); */
+            background: #adb195 url('images/green_background.jpg') top left repeat;
+            -webkit-background-size: cover;
+            -moz-background-size: cover;
+            -o-background-size: cover;
+            background-size: cover;
         }
         .grid-container {
             display: grid;
@@ -70,7 +75,7 @@
 
         </style>
 	    <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
-        <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap@4.5.3/dist/css/bootstrap.min.css" integrity="sha384-TX8t27EcRE3e/ihU7zmQxVncDAy5uIKz4rEkgIXeMed4M0jlfIDPvg6uqKI2xXr2" crossorigin="anonymous">
+        <link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/css/bootstrap.min.css" integrity="sha384-Gn5384xqQ1aoWXA+058RXPxPg6fy4IWvTNh0E263XmFcJlSAwiGgFAW/dAiS6JXm" crossorigin="anonymous">
     </head>
 
     <body>
@@ -108,7 +113,27 @@
                 <span class = "totalCost">$0.00</span>
             </div>
             <div class="checkout text-center">
-                <button type="button" class="btn btn-primary btn-lg">Checkout</button>
+                <button type="button" class="btn btn-primary btn-lg" data-toggle="modal" data-target="#checkConfirmation">Checkout</button>
+            </div>
+          </div>
+
+          <div class="modal fade" id="checkConfirmation" tabindex="-1" role="dialog" aria-labelledby="checkConfirmation" aria-hidden="true">
+            <div class="modal-dialog" role="document">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title" id="checkConfirmation">Are you sure you want to checkout?</h5>
+                  <button type="button" class="close" data-dismiss="modal" aria-label="Close">
+                    <span aria-hidden="true">&times;</span>
+                  </button>
+                </div>
+                <div class="modal-body">
+                    Confirming means that your purchase will be finalized and your shopping is complete.
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-primary">Confirm</button>
+                    <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
+                </div>
+              </div>
             </div>
           </div>
         </div>
@@ -382,5 +407,9 @@
                 }
             });
         </script>
+        <!-- Bootstrap scripts -->
+        <script src="https://code.jquery.com/jquery-3.2.1.slim.min.js" integrity="sha384-KJ3o2DKtIkvYIK3UENzmM7KCkRr/rE9/Qpg6aAZGJwFDMVNA/GpGFF93hXpG5KkN" crossorigin="anonymous"></script>
+        <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.12.9/umd/popper.min.js" integrity="sha384-ApNbgh9B+Y1QKtv3Rn7W3mgPxhU9K/ScQsAP7hUibX39j7fakFPskvXusvfa0b4Q" crossorigin="anonymous"></script>
+        <script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.0.0/js/bootstrap.min.js" integrity="sha384-JZR6Spejh4U02d8jOt6vLEHfe/JQGiRRSQQxSfFWpi1MquVdAyjUar5+76PVCmYl" crossorigin="anonymous"></script>
     </body>
 </html>
