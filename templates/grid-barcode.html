@@ -6,7 +6,7 @@
 
         html, .page {
             /* background: linear-gradient(to bottom right, #3392db 0%, #9cbe97 83%); */
-            background: #adb195 url('../images/green_background.jpg') top left repeat;
+            background: #adb195 url('../static/images/green_background.jpg') top left repeat;
         }
         .grid-container {
             display: grid;
@@ -126,7 +126,9 @@
                     Confirming means that your purchase will be finalized and your shopping is complete.
                 </div>
                 <div class="modal-footer">
-                    <button type="button" class="btn btn-primary">Confirm</button>
+                    <form action="{{ url_for('checkout') }}" method="POST">
+                        <button type="submit" class="btn btn-primary">Confirm</button>
+                    </form>
                     <button type="button" class="btn btn-secondary" data-dismiss="modal">Close</button>
                 </div>
               </div>

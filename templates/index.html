@@ -3,13 +3,13 @@
 
     <head>
         <title>Home Page</title>
-        <link href="page.css" rel="stylesheet">        
+        <link rel="stylesheet" type = "text/css" href="{{ url_for('static', filename='page.css')}}">        
     </head>
 
     <body>
 
         <a href="/" title="Return to Home Page" id="logo">
-            <img src="../images/logo.png" alt="UTD Marketplace">
+            <img src="{{ url_for('static', filename='images/logo.png')}}" alt="UTD Marketplace">
 
         
         </a>
@@ -22,8 +22,9 @@
                 <p class="lead">Thank you for using our automated shopping trolley. 
                     We hope to give you the best possible customer satisfaction.</p>
                 
-
-                <button class="block">Swipe Your Card To Get Started >></button>
+                <form action="{{ url_for('scan') }}" method="POST">
+                    <button class="block" type="submit" action="{{ url_for('scan') }}">Swipe Your Card To Get Started >></button>
+                </form>
 
 
 

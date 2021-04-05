@@ -5,7 +5,7 @@
 
 
 body {
-    background: #adb195 url('../images/green_background.jpg') top left repeat;
+    background: #adb195 url('images/green_background.jpg') top left repeat;
     color: #75480a; 
     /* Thanks to CSSfontstack.com */
     font-family: "Lucida Grande","Lucida Sans Unicode","Lucida Sans",Geneva,Verdana,sans-serif;
@@ -25,7 +25,7 @@ body {
     width: 600px;
     margin: 0 auto;
     padding: 30px;
-    background: url('../images/yellow_background.jpg') top left repeat;
+    background: url('images/yellow_background.jpg') top left repeat;
 }
 
 #container:after {

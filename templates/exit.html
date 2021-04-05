@@ -3,12 +3,12 @@
 
     <head>
         <title>Exit Page</title>
-        <link href="page.css" rel="stylesheet">        
+        <link rel="stylesheet" href="{{ url_for('static', filename= 'page.css') }}">       
     </head>
 
     <body>
         <a href="/" title="Return to Home Page" id="logo">
-            <img src="../images/logo.png" alt="UTD Marketplace">
+            <img src="{{ url_for('static', filename='images/logo.png')}}" alt="UTD Marketplace">
         </a>
         <div id="container">
             <div id="main-content">
@@ -19,7 +19,7 @@
 
         <script>
             setTimeout(function(){
-               window.location.href = 'index.html';
+               window.location.href = '/';
             }, 10000);
          </script>
     </body>
