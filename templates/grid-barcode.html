@@ -143,11 +143,29 @@
               </div>
             </div>
           </div>
+
+        <!-- ALERT Modal -->
+        <div class="modal fade" id="modalAlert" role="dialog" data-keyboard="false" data-backdrop="static">
+            <div class="modal-dialog">
+                <!-- Modal content-->
+                <div class="modal-content">
+                    <div class="modal-header">
+                        <h4 class="modal-title">ERROR</h4>
+                    </div>
+                    <div class="modal-body">
+                        <h4>We have detected an error in your cart.</h4>
+                        <p>Please See A Cashier For Further Assistance.</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
         </div>
 
           <script>
             var itemsList = new Array();
             var taxRate = 1.0825;
+            var expectedWeight = 0;
 
             function addOrRemove() {
                 const radioButtons = document.querySelectorAll('input[name="options"]');
@@ -259,9 +277,10 @@
 
 
 
-            function adjustSessionItemQuantityAndTotal(index, name, quantity, total) {
+            function adjustSessionItemQuantityAndTotal(index, name, quantity, total, weight) {
                 itemsList[index].quantity = itemsList[index].quantity + quantity;
                 itemsList[index].total = itemsList[index].total + total;
+                itemsList[index].weight = itemsList[index].weight + weight;
             }
 
 
@@ -289,7 +308,7 @@
                     let sessionItemIndex = findSessionItemInItemsList(sessionItem.name);       //Check to see if sessionItem is in itemsList
                     //sessionItem is in itemsList
                     if(sessionItemIndex > -1) {
-                        adjustSessionItemQuantityAndTotal(sessionItemIndex, sessionItem.name, sessionItem.quantity, sessionItem.total);
+                        adjustSessionItemQuantityAndTotal(sessionItemIndex, sessionItem.name, sessionItem.quantity, sessionItem.total, sessionItem.weight);
                     }
                     //There is an existing list, but the item isn't in the list
                     else if(Array.isArray(itemsList) && itemsList.length >= 0) 
@@ -310,6 +329,7 @@
                 for(index = 0; index < itemsList.length; index++) {
                     $(".dataBarcode").append(insertSessionItem(itemsList[index]));
                     adjustTotal(itemsList[index].total);
+                    expectedWeight = expectedWeight + itemsList[index].weight;
                 }
             }
 
@@ -324,13 +344,38 @@
                     insertPreviousSessionData();
             }
 
+            function requestWeight() {
+                var weightData = $.get('/weight/' + expectedWeight);    //Get weight sensor data
+
+                //When weight sensor data is returned
+                weightData.done(function (actualWeight) {
+
+                    //The weight isn't within +- 10% of the expected weight
+                    if(actualWeight < (expectedWeight * 0.9) || actualWeight > (expectedWeight * 1.1)) {
+                        //Modal isn't showing
+                        if(!($('#modalAlert').hasClass('show'))) {
+                            console.log("Not expected weight");
+                            console.log("Expected weight: " + expectedWeight);
+                            console.log("Actual weight: " + actualWeight);
+                            $('#modalAlert').modal({show:true});
+                        }
+                    } else {
+                        //Modal is showing
+                        if($('#modalAlert').hasClass('show')) 
+                            $('#modalAlert').modal('hide');
+                    }
+                    setTimeout(requestWeight, 1000);    //Call requestWeight again after a second
+                });
+            }
+
             function requestData() {
                 let action;
-                let sessionItem = {name: "", price: 0, quantity: 0, total: 0};
+                let sessionItem = {name: "", price: 0, quantity: 0, total: 0, weight: 0};
 
-                var data = $.get('/getbarcode');        //Call python code for barcode scanner
+                var barcodeData = $.get('/getbarcode');        //Call python code for barcode scanner
+
                 //When python code returns something
-                data.done(function (result)
+                barcodeData.done(function (result)
                 {
                     if(result === "error")
                         console.log("Failed to GET from Database");
@@ -348,6 +393,7 @@
                         action = addOrRemove();                         //Determine whether the radio buttons are on add or remove
 
                         if(action === "add") {
+                            expectedWeight = expectedWeight + result.ItemWeight;
                             //Add new item
                             if(tableItem === 0) {
                                 console.log("Add non-existing item.");
@@ -356,6 +402,7 @@
                                 sessionItem.price = result.ItemPrice;
                                 sessionItem.quantity = 1;
                                 sessionItem.total = itemTotal;
+                                sessionItem.weight = result.ItemWeight;
                             }
                             //Item is in the table so just increase quantity
                             else {
@@ -364,6 +411,7 @@
                                 sessionItem.name = result.ItemName 
                                 sessionItem.quantity = 1;
                                 sessionItem.total = itemTotal;
+                                sessionItem.weight = result.ItemWeight;
                             }
                             adjustTotal(itemTotal); //Adjust the total at the bottom of the cart
                         }
@@ -379,6 +427,7 @@
                                 if(quantity === 1) {
                                     console.log("Remove item completely");
                                     removeItem(tableItem);
+                                    expectedWeight = expectedWeight - result.ItemWeight;
                                     sessionItem.name = result.ItemName;
                                     sessionItem.quantity = 0;               //0 means we're removing the item
                                 }
@@ -386,9 +435,11 @@
                                 else {
                                     console.log("Decrease quantity of existing item.");
                                     editQuantityTotal(tableItem, -1, itemTotal);
+                                    expectedWeight = expectedWeight - result.ItemWeight;
                                     sessionItem.name = result.ItemName 
                                     sessionItem.quantity = -1;
                                     sessionItem.total = -1 * itemTotal;
+                                    sessionItem.weight = -1 * result.ItemWeight;
                                 }
                                 adjustTotal(itemTotal * -1);    //Adjust the total at the bottom of the cart
                             }
@@ -402,13 +453,17 @@
                     }
                     setTimeout(requestData, 250);
                 });
+
             }
+
+
 
             $(document).ready(function()
             {
                 try {
                     getPreviousSessionData();
                     requestData();
+                    requestWeight();
                 } catch(err) {
                     console.log("Error", err);
                 }

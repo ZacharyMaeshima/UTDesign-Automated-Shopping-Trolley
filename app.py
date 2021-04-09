@@ -13,9 +13,16 @@ def home():
 def scan():
     return render_template("grid-barcode.html")
 
+
 @app.route("/getbarcode", methods = ["GET"])
 def getBarcode():
     return BarcodeScanner.UPC_lookup(BarcodeScanner.barcode_reader())
+
+
+@app.route("/weight/<weightNum>", methods = ["GET"])
+def getWeight(weightNum):
+    return weightNum;
+
 
 
 @app.route("/checkout", methods = ["GET", "POST"])
