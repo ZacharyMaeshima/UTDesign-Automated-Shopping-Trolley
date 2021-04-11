@@ -1,15 +1,7 @@
 #!/usr/bin/python
 import sys
-import boto3
 import evdev
 
-tableName = "AutomatedShoppingTrolleyDB"
-primaryColumn = "UPC"
-REGION = "us-east-1"
-# ACCESS_KEY, SECRET_KEY, AND TOKEN have to be replaced every 3 hours (limitation of AWS student account)
-ACCESS_KEY = "blah"
-SECRET_KEY = "blah"
-TOKEN = "blah"
 
 keys = {
     # Scancode: ASCIICode
@@ -21,6 +13,37 @@ keys = {
     50: u'M', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
 }
 
+table = [
+    {
+        "UPC": "037000962564",
+        "ItemName": "Febreeze Air Freshener (Linen & Sky)",
+        "ItemPrice": 3.49,
+        "ItemTaxable": True,
+        "ItemWeight": 250
+    },
+    {
+        "UPC": "022592007014",
+        "ItemName": "Ozarka Water Bottle (16.9 FL Oz)",
+        "ItemPrice": 0.99,
+        "ItemTaxable": False,
+        "ItemWeight": 150
+    },
+    {
+        "UPC": "038000138430",
+        "ItemName": "Pringles (Sour Cream & Onion)",
+        "ItemPrice": 1.99,
+        "ItemTaxable": False,
+        "ItemWeight": 150
+    },
+    {
+        "UPC": "788521500109",
+        "ItemName": "Hand Santizer",
+        "ItemPrice": 3.99,
+        "ItemTaxable": True,
+        "ItemWeight": 600
+    }
+]
+
 barcodeDeviceName = ""
 barcodeDevicePath = ""
 
@@ -31,11 +54,13 @@ def findBarcodeInputDevice():
             barcodeDevicePath = device.path
             return True
     return False
+            
 
 def barcode_reader():
     # dev = evdev.InputDevice('/dev/input/event2')
     dev = evdev.InputDevice(barcodeDevicePath)
     # print(dev)
+
     singleKey = 0
     barcode = ''
     while(len(barcode) < 12):
@@ -47,8 +72,6 @@ def barcode_reader():
                     dev.close()
                     break
                 if singleKey == 0:
-                    # print("Scan code: " + str(data.scancode))
-                    # print("Key: " + str(keys[data.scancode]))
                     barcode = barcode + str(keys[data.scancode])
                     singleKey = 1
                 else:
@@ -57,38 +80,27 @@ def barcode_reader():
     return barcode
 
 
+
 def UPC_lookup(upc):
-    db = boto3.resource('dynamodb',
-                        aws_access_key_id = ACCESS_KEY,
-                        aws_secret_access_key = SECRET_KEY,
-                        aws_session_token = TOKEN,
-                        region_name = REGION)
-    table = db.Table(tableName)
     try :
-        response = table.get_item(
-            Key = {
-                primaryColumn: upc
-                })
-        
-        response = response['Item']
-        formattedResponse = {
-            "ItemName": response['ItemName'],
-            "ItemPrice": float(response['ItemPrice']),
-            "ItemTaxable": response['ItemTaxable'],
-            "ItemWeight": float(response['ItemWeight'])}
+        response = "error"
+        for item in table:
+            if item['UPC'] == upc:
+                response = item
     
         print("-----" * 5)
-        print(formattedResponse)
+        print(response)
         print("-----" * 5 + "\n")
-        # return upc
-        return formattedResponse
+        return response
     
     except:
-            print("Failed to get item from the DynamoDB Table")
+            print("Error")
             return "error"
 
 # Looks for device path when imported
 findBarcodeInputDevice()
+
+
 
 if __name__ == '__main__':
     try:

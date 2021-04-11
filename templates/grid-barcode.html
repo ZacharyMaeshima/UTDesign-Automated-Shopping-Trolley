@@ -345,10 +345,10 @@
             }
 
             function requestWeight() {
-                var weightData = $.get('/weight/' + expectedWeight);    //Get weight sensor data
-
+                var weightData = $.get('/weight');      //Get actual weight
                 //When weight sensor data is returned
-                weightData.done(function (actualWeight) {
+                weightData.done(function (result) {
+                    let actualWeight = result.weight;
 
                     //The weight isn't within +- 10% of the expected weight
                     if(actualWeight < (expectedWeight * 0.9) || actualWeight > (expectedWeight * 1.1)) {
