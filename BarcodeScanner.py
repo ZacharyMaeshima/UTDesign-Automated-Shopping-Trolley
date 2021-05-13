@@ -21,7 +21,7 @@ keys = {
     50: u'M', 51: u',', 52: u'.', 53: u'/', 54: u'RSHFT', 56: u'LALT', 100: u'RALT'
 }
 
-barcodeDeviceName = ""
+barcodeDeviceName = "Logic Scanner"
 barcodeDevicePath = ""
 
 def findBarcodeInputDevice():
